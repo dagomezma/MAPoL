@@ -3,10 +3,7 @@
 
 //#define DEBUG
 #define TEST_MAPoL
-
 #define BASE_INDEX 1
-
-
 
 #include <fstream>
 #include <ctime>
@@ -21,8 +18,8 @@ using namespace std;
 using namespace Eigen;
 
 /*
- * Parâmetros de Execução.
- * Parâmetros com valores default
+ * Execution parameters.
+ * Paremeters with default values
  */
 
 string	path			= "datasets/case14.m";
@@ -34,7 +31,7 @@ double	W_MIN			= 0.4;
 double	COG				= 2;
 double	SOC				= 2;
 uint	N_THREADS		= sysconf(_SC_NPROCESSORS_ONLN);
-/* Fim Parâmetros de Execução */
+/* End of execution parameters */
 
 double *timeTable;
 enum TimeTableIndexes {
@@ -83,7 +80,7 @@ string labelNR[] = {
 };
 
 
-// Arquivo com resultados
+// File with results
 fstream logFile;
 
 #include <pso/Particula.h>
@@ -109,25 +106,32 @@ fstream logFile;
 #include "util/strings.h"
 #include "util/writelog.h"
 
+/*
+ * The following help text has been translated from Portuguese to English
+ * However, said parameters, in-code, have not been translated yet.
+ */
 void printHelp(){
 	printf(""
 			"\n####################################################"
 			"\n#####  MAPoL - Minimize Active Power Loss  #########"
 			"\n####################################################"
+			"\nRuns an active power loss minimization for a given casefile, for a given execution type EXEC-TYPE."
 			"\n"
-			"\nUtilização: MAPoL  ARQUIVO EXECUCAO ALGORITMO NºPART NºITER WMAX WMIN C1 C2"
-			"\n\tExecuta minimização da perda de potência ativa do caso de teste ARQUIVO de Forma EXECUCAO"
-			"\n\tARQUIVO\t caso de teste de Fluxo de Potencia no padrão do pacote do MATLAB MATPOWER. Valor Pardão: datasets/case14.m"
-			"\n\tEXECUCAO\t execução de forma Sequencial ou Paralelo ou OpenMP, opções: S ou P ou O: Valor Padrão: S"
-			"\n\tNºPART\t número de partículas (PSO)"
-			"\n\tNºTHREADS\T número de threads CPU:\n\t\tNPART - Mesmo número de partículas\n\t\tMAX (default) - Máximo número de threads simultâneas no processador\n\t\tInsira um número inteiro específico"
-			"\n\tALGORITMO\t Algoritmo para calculo do Fluxo de Carga: NR - Newton-Raphson, FDBX ou FDXB para Fast-Decoupled Power Flow. Valor Padrão: NR"
-			"\n\tMETODO\t Metodo para resolução de Sistemas Lineares: MKL_DSS: decom. LU pelo MKL, SparseLU: decom. LU pela Eigen. Valor Padrão: MKL_DSS"
-			"\n\tNºITER\t número de iterações (PSO)"
-			"\n\tWMAX\t valor máximo de inércia (PSO)"
-			"\n\tWMIN\t valor mínimo de inércia (PSO)"
-			"\n\tC1\t valor do parâmetro cognitivo (PSO)"
-			"\n\tC2\t valor do parâmetro social (PSO)"
+			"\nUsage: MAPoL FILEPATH EXEC-TYPE PART-N ITER-N WMAX WMIN C1 C2"
+			"\n\tFILEPATH\tcasefile for powerflow at MATLAB-Matpower format (default: datasets/case14.m)"
+			"\n\tEXEC-TYPE\tExecution in a sequential (S); parallel (P) or OpenMP (O) manner (defautl: S)"
+			"\n\tPART-N\t\t(PSO) Particle number"
+			"\n\tITER-N\t\t(PSO) Number of iterations"
+			"\n\tWMAX\t\t(PSO) Minimum inertia value"
+			"\n\tWMIN \t\t(PSO) Maximum inertia value"
+			"\n\tC1\t\t(PSO) Cognitive parameter value"
+			"\n\tC2\t\t(PSO) Social parameter value"
+			"\n\tTHREAD-NUMBER Number of CPU threads"
+			"\n\t\tNPART\t- Same number of particles"
+			"\n\t\tMAX\t- (default) Maximum number of simultaneous threads on processor"
+			"\n\t\t(Enter a specific integer)"
+			"\n\tALGORITHM Powerflow solving (NR: Newton-Raphson; FDBX/FDXB: Fast-Decoupled Powerflow; default: NR)"
+			"\n\tMETHOD Linear system solution (MKL_DSS: LU decomp. by MKL; SparseLU: LU decomp. by Eigen; default: MKL_DSS)"
 			"\n\n");
 	exit(1);
 }
@@ -222,7 +226,7 @@ int main(int argc, char **argv) {
 	readParameters(argc, argv);
 
 	Topology t = loadMatpowerFormat(path);
-	writeLog(string("Caso de Teste Carregado: ") + path);
+	writeLog(string("Loaded test case: ") + path);
 
 	vector<pso::Particula::Estrutura> estrutura;
 	for(int i = 0; i < t.buses.size(); i++){
@@ -382,7 +386,7 @@ int main(int argc, char **argv) {
 			break;
 		default:
 		{
-			cout << "Comando EXECUCAO desconhecido. Comandos Validos: S e P" << endl;
+			cout << "Unkown EXEC-TYPE. Valid EXEC-TYPEs: S; P" << endl;
 			printHelp();
 		}
 	}
@@ -413,7 +417,7 @@ int main(int argc, char **argv) {
 		}
 		default:
 		{
-			cout << "Comando EXECUCAO desconhecido. Comandos Validos: S e P" << endl;
+			cout << "Unkown EXEC-TYPE. Valid EXEC-TYPEs: S; P" << endl;
 			printHelp();
 		}
 	}
@@ -445,14 +449,14 @@ int main(int argc, char **argv) {
 			}
 			default:
 			{
-				cout << "Comando EXECUCAO desconhecido. Comandos Validos: S e P" << endl;
+				cout << "Unkown EXEC-TYPE. Valid EXEC-TYPEs: S; P" << endl;
 				printHelp();
 			}
 		}
 	timeTable[TIME_FREE] += GetTimer() - start;
 #endif
     double time = GetTimer();//(clock() - inicio) / (double)CLOCKS_PER_SEC;
-    writeLog(string("Tempo de Execucao: ") + to_string(time) + string(" s"));
+    writeLog(string("Execution time: ") + to_string(time) + string(" s"));
 	timeTable[TIME_MAIN] += time;
 
 

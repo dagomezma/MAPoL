@@ -1,3 +1,6 @@
 /Debug
+/.settings
 .cproject
 .project
+log.sql
+src/log.sql
