@@ -4,3 +4,7 @@
 .project
 log.sql
 src/log.sql
+/src/x64
+/src/MAPoL_windows/x64
+/src/MAPoL_windows/*.log
+/src/.vs
