@@ -1,14 +1,14 @@
 #ifndef LOADMATPOWERFORMAT_H_
 #define LOADMATPOWERFORMAT_H_
 
+#include <cstdlib>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstdlib>
 #include <vector>
-#include <thrust/host_vector.h>
-#include <cmath>
 
+#include <thrust/host_vector.h>
 #include <powersystem/Topology.h>
 
 Topology loadMatpowerFormat(std::string path) {
@@ -16,7 +16,7 @@ Topology loadMatpowerFormat(std::string path) {
     dataset.open(path.c_str());
 
     if (dataset.fail()) {
-        std::cout << "Falha ao abrir caso de teste!" << std::endl;
+        std::cout << "Failed to open test case!" << std::endl;
         std::exit(1);
     }
 
@@ -27,78 +27,94 @@ Topology loadMatpowerFormat(std::string path) {
     double baseMVA;
     std::string line;
     getline(dataset, line);
+    std::cout << "First line: " << line << std::endl;
 
+    int dgm_i = 1;
     while (dataset >> line) {
-        if (line[0] == '%' || line.empty()) {
-            getline(dataset, line);
+    	printf("DGM:: inside loadcase function while, i = %d\n", dgm_i);
+    	if (line[0] == '%' || line.empty()) {
+    		getline(dataset, line);
             continue;
         }
         if (line.compare("mpc.version") == 0) {
-            dataset >> line;
+        	dataset >> line;
             dataset >> line;
             if (line.compare("'2';") != 0) {
-                std::cout << "Input MathPower case old version!" << std::endl;
+                std::cout << "Matpower case input: old version!" << std::endl;
                 std::exit(1);
             }
         }
         if (line.compare("mpc.baseMVA") == 0) {
-            dataset >> line;
+        	printf("DGM:: inside loadcase, i = %d, now checking baseMVA\n", dgm_i);
+        	dataset >> line;
             dataset >> baseMVA;
             getline(dataset, line);
         }
         if (line.compare("mpc.bus") == 0) {
-            getline(dataset, line);
-            dataset >> line;
-            while (line.compare("];") != 0) {
-                unsigned int id; // ID da barra
-                Bus::Type type;      // tipo de barra
-                double V;       // tensão na barra (p.u.)
-                double Vmax;    // tensão máxima (p.u.)
-                double Vmin;    // tensão mínima (p.u.)
-                double baseKV;   // tensão base (kV)
-                double O;       // ângulo da tensão (graus)
-                double P;       // potência ativa demandada (MW)
-                double Q;       // potência reativa demandada (MVAr)
-                double Gsh;     // condutância shunt (p.u.)
-                double Bsh;     // susceptância shunt (p.u.)
+        	printf("DGM:: inside loadcase, i = %d, now checking bus data\n", dgm_i);
+        	unsigned int id;  // Bus ID
+			Bus::Type type;   // Bus type
+			double V;         // Bus voltage (p.u.)
+			double Vmax;      // Max voltage (p.u.)
+			double Vmin;      // Min voltage (p.u.)
+			double baseKV;    // Base voltage (kV)
+			double O;         // Voltage angle (degrees)
+			double P;         // Active power demand (MW)
+			double Q;         // Reactive power demand (MVAr)
+			double Gsh;       // Shunt conductance (p.u.)
+			double Bsh;       // Shunt susceptance (p.u.)
+			double tmp_d;
 
-                double tmp_d;
-                id = std::atof(line.c_str());
+			getline(dataset, line);
+			dataset >> line;
+
+            while (line.compare("];") != 0) {
+            	id = std::atof(line.c_str());
                 dataset >> tmp_d;
                 type = Bus::Type(tmp_d);
                 dataset >> P;
                 dataset >> Q;
                 dataset >> Gsh;
                 dataset >> Bsh;
-                dataset >> tmp_d;
+                dataset >> tmp_d;  // area, ignored
                 dataset >> V;
                 dataset >> O;
                 dataset >> baseKV;
-                dataset >> tmp_d;
+                dataset >> tmp_d;  // zone, ignored
                 dataset >> Vmax;
                 dataset >> Vmin;
                 buses.push_back(
-                        Bus(busesID.size(), type, V, O * M_PI / 180.0, 0.0, -P / baseMVA, -Q / baseMVA, Gsh / baseMVA,
-                                Bsh / baseMVA, Vmax, Vmin, baseKV, -1, -1));
+                		Bus(busesID.size(), type, V,
+                		O * M_PI / 180.0, 0.0, -P / baseMVA, -Q / baseMVA,
+                		Gsh / baseMVA, Bsh / baseMVA, Vmax,
+                		Vmin, baseKV, -1, -1));
                 busesID.push_back(id);
                 getline(dataset, line);
                 dataset >> line;
             }
         }
         if (line.compare("mpc.gen") == 0) {
-            getline(dataset, line);
+        	printf("DGM:: inside loadcase, i = %d, now checking gen data\n", dgm_i);
+        	getline(dataset, line);
             dataset >> line;
-            while (line.compare("];") != 0) {
-                unsigned int busID; // ID da barra geradora
-                double P = 0;           // potência ativa gerada
-                double Q = 0;           // potência reativa gerada
-                double Pmax;        // máxima potência ativa gerada
-                double Pmin;        // mínima potência ativa gerada
-                double Qmax;        // máxima potência reativa gerada
-                double Qmin;        // mínima potência reativa gerada
-                double VG;        // Tensão do Gerador
+            int dgm_ii = 1;
 
-                double tmp_d;
+            unsigned int busID;  // Gen bus ID
+			double P = 0;        // Generated actve power
+			double Q = 0;        // Generated reactive power
+			double Pmax;         // Max Gen P
+			double Pmin;         // Min Gen P
+			double Qmax;         // Max Gen Q
+			double Qmin;         // Min Gen Q
+			double VG;           // Generator voltage
+
+			double tmp_d;  // temp double
+			std::string tmp_s;
+
+            while (line.compare("];") != 0) {
+            	printf("DGM:: inside loadcase, ii = %d, now checking gen data\n", dgm_ii);
+            	cout << "DGM:: inside loadcase, line = " << line << endl;
+
                 busID = std::atof(line.c_str());
                 for (int i = 0; i < busesID.size(); i++) {
                     if (busID == busesID[i]) {
@@ -110,8 +126,16 @@ Topology loadMatpowerFormat(std::string path) {
                 buses[busID].P += P / baseMVA;
                 dataset >> Q;
                 buses[busID].Q += Q / baseMVA;
-                dataset >> Qmax;
-                dataset >> Qmin;
+
+                /////////////
+                dataset >> tmp_s;
+                cout << "DGM:: gen line dataset #4: " << tmp_s << endl;
+                Qmax = ( tmp_s.compare("Inf") == 0 ? DBL_MAX : atof(tmp_s.c_str()) );
+                //dataset >> Qmax;
+                dataset >> tmp_s;
+				cout << "DGM:: gen line dataset #5: " << tmp_s << endl;
+				Qmin = ( tmp_s.compare("-Inf") == 0 ? -(DBL_MAX-2) : atof(tmp_s.c_str()) );
+                //dataset >> Qmin;
                 dataset >> VG;
                 buses[busID].VG = VG;
                 dataset >> tmp_d;
@@ -121,24 +145,29 @@ Topology loadMatpowerFormat(std::string path) {
                 gens.push_back(Generator(busID, P, Q, Pmax, Pmin, Qmax, Qmin));
                 getline(dataset, line);
                 dataset >> line;
+
+                dgm_ii++;
             }
         }
         if (line.compare("mpc.branch") == 0) {
-            getline(dataset, line);
+        	getline(dataset, line);
             dataset >> line;
+
+            printf("DGM:: inside loadcase, i = %d, now checking branch data\n", dgm_i);
+
             while (line.compare("];") != 0) {
-                unsigned int from;  // barra origem
-                unsigned int to;    // barra destino
-                bool inservice;     // se o circuito está fechado
-                double R;           // resistência (p.u.)
-                double X;           // reatância (p.u.)
-                double B;           // susceptância da linha (p.u.)
-                double tap;        // tap do transformador (tap = from.V / to.V)
+                unsigned int from;  // From Bus
+                unsigned int to;    // To Bus
+                bool inservice;     // Is the circuit closed or not (open)
+                double R;           // Resistance (p.u.)
+                double X;           // Reactance (p.u.)
+                double B;           // Line Susceptance (p.u.)
+                double tap;        // Transormer tap (tap = from.V / to.V)
                 double shift;       // defasagem em transformador defasador
-//                double Pfrom;       // potência ativa injetada em from
-//                double Qfrom;       // potência reativa injetada em from
-//                double Pto;         // potência ativa injetada em to
-//                double Qto;         // potência reativa injetada em to
+//                double Pfrom;       // Active power injected at from
+//                double Qfrom;       // Reactive power injected at from
+//                double Pto;         // Active power injected at to
+//                double Qto;         // Reactive power injected at to
 
                 double tmp_d;
                 from = std::atof(line.c_str());
@@ -173,6 +202,7 @@ Topology loadMatpowerFormat(std::string path) {
                 dataset >> line;
             }
         }
+        dgm_i++;
     }
     Topology topo(baseMVA, busesID, buses, branches, gens);
     return topo;

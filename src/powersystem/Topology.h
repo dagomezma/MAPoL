@@ -11,14 +11,14 @@
 #include <util/CVector.h>
 
 /*
- * Classe que define a topologia do barramento elétrico
+ * Class in which topology is defined
  *
- * (WARNING: usar esta classe somente no host)
+ * (WARNING: use this class only at host)
  */
 struct Topology {
 
     /*
-     * Atributos
+     * Attributes
      */
     double baseMVA;
     thrust::host_vector<unsigned int> busesID;
@@ -26,31 +26,30 @@ struct Topology {
     thrust::host_vector<Branch> branches;
     thrust::host_vector<Generator> gens;
 
-    // IDs das barras por tipo
+    // Bus IDs by type
     unsigned int idSlackBus;
     thrust::host_vector<unsigned int> idPVbuses;
     thrust::host_vector<unsigned int> idPQbuses;
 
     /*
-     * Construtor padrão
+     * Default constructor
      */
     __host__ Topology() :
-            baseMVA(0), busesID(1), buses(1), branches(1), gens(1), idSlackBus(0), idPVbuses(1), idPQbuses(1) {
-    }
+            baseMVA(0), busesID(1), buses(1),
+            branches(1), gens(1), idSlackBus(0),
+            idPVbuses(1), idPQbuses(1) {}
 
     /*
-     * Construtor de cópia
+     * Copy operation constructor
      */
     __host__ Topology(const Topology& other) :
-            baseMVA(other.baseMVA), busesID(other.busesID), buses(other.buses), branches(
-                    other.branches), gens(other.gens), idSlackBus(
-                    other.idSlackBus), idPVbuses(other.idPVbuses), idPQbuses(
-                    other.idPQbuses) {
-    }
+            baseMVA(other.baseMVA), busesID(other.busesID), buses(other.buses),
+            branches(other.branches), gens(other.gens), idSlackBus(other.idSlackBus),
+            idPVbuses(other.idPVbuses), idPQbuses(other.idPQbuses) {}
 
     /*
-     * Construtor com parâmetros.
-     * Recebe o número de elementos em cada vetor
+     * Input-parameters constructor
+     * Receives the number of elements in each vector
      */
     __host__ Topology(double baseMVA, unsigned int nBuses,
             unsigned int nBranches, unsigned int nGenerators) :
@@ -89,8 +88,8 @@ struct Topology {
     }
 
     /*
-     * Construtor que recebe thrust::host_vector's e copia seus
-     * conteúdos para os thrust::device_vector's
+     * Constructor which receives thrust::host_vector's and copies its contents
+     * into a thrust::device_vector
      */
     __host__ Topology(double baseMVA, thrust::host_vector<unsigned int> busesID,
             thrust::host_vector<Bus> buses,
@@ -128,8 +127,8 @@ struct Topology {
     }
 
     /*
-     * Estrutura que empacota os vetores exportados da topologia
-     * para utilizá-los em kernels CUDA
+     * Structure which packets the exported topology vectors
+     * for their use at CUDA kernels
      */
     struct Exported {
         double baseMVA;
@@ -137,16 +136,16 @@ struct Topology {
         CVector<Branch> branches;
         CVector<Generator> gens;
 
-        // IDs das barras por tipo
+        // Bus IDs by type
         unsigned int idSlackBus;
         CVector<unsigned int> idPVbuses;
         CVector<unsigned int> idPQbuses;
     };
 
     /*
-     * Exporta os vetores que compõem a topologia
-     * em vetores padrões da linguagem C (utilizando CVector)
-     * para que se possa utilizar em kernels CUDA
+     * Exports the vectors comprised by the topology
+     * into C language default vectors (by using CVector)
+     * so they can be used within CUDA kernels
      */
     __host__ Exported exportTopology() {
         Exported exported;
@@ -165,7 +164,7 @@ struct Topology {
     }
 
     /*
-     * Exporta o vetor de barras
+     * Exports the bus vector
      */
     inline __host__ CVector<Bus> exportBuses() {
         CVector<Bus> exported;
@@ -177,7 +176,7 @@ struct Topology {
     }
 
     /*
-     * Exporta o vetor de ramos
+     * Exports the branches vector
      */
     inline __host__ CVector<Branch> exportBranches() {
         CVector<Branch> exported;
@@ -189,7 +188,7 @@ struct Topology {
     }
 
     /*
-     * Exporta o vetor de geradores
+     * Exports the generators vector
      */
     inline __host__ CVector<Generator> exportGenerators() {
         CVector<Generator> exported;
@@ -201,7 +200,7 @@ struct Topology {
     }
 
     /*
-     * Exporta a lista de barras PV
+     * Exports the PV buses list
      */
     inline __host__ CVector<unsigned int> exportIdPVbuses() {
         CVector<unsigned int> exported;
@@ -213,7 +212,7 @@ struct Topology {
     }
 
     /*
-     * Exporta a lista de barras PQ
+     * Exports the PQ buses list
      */
     inline __host__ CVector<unsigned int> exportIdPQbuses() {
         CVector<unsigned int> exported;

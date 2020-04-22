@@ -23,14 +23,12 @@ class Solucao {
 
 public:
 	Solucao() :
-			valores(0), _fitness(0), _tempo(0), _iteracao(0) {
-	}
+			valores(0), _fitness(0), _tempo(0), _iteracao(0) {}
 
-	Solucao(std::vector<double> &valores, double fitness, double tempo,
-			uint iteracao) :
-			valores(valores), _fitness(fitness), _tempo(tempo), _iteracao(
-					iteracao) {
-	}
+	Solucao(std::vector<double> &valores,
+			double fitness, double tempo, uint iteracao) :
+			valores(valores),
+			_fitness(fitness), _tempo(tempo), _iteracao(iteracao) {}
 
 	double operator[](uint posicao) {
 		return valores[posicao];

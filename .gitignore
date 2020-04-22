@@ -4,3 +4,5 @@
 .project
 log.sql
 src/log.sql
+/results
+/datasets

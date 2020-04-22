@@ -1,25 +1,24 @@
-#include <iostream>
-#include <thrust/host_vector.h>
-
 //#define DEBUG
-#define TEST_MAPoL
+//#define TEST_MAPoL
 #define BASE_INDEX 1
 
-#include <fstream>
-#include <ctime>
 #include <iostream>
-#include <string>
+#include <fstream>
 #include <sstream>
+#include <ctime>
+#include <string>
 #include <cstdio>
 #include <unistd.h>
-#include <Eigen/SparseLU>
+
+#include <thrust/host_vector.h>
+#include "Eigen/SparseLU"
 
 using namespace std;
 using namespace Eigen;
 
 /*
- * Execution parameters.
- * Paremeters with default values
+ * Execution parameters
+ * Parameters with default values
  */
 
 string	path			= "datasets/case14.m";
@@ -94,8 +93,8 @@ fstream logFile;
 #include <cusolverSp.h>
 #include <cusolverSp_LOWLEVEL_PREVIEW.h>
 #include <cusolverRf.h>
-#include <util/helper_cuda.h>
-#include <util/timer.h>
+#include "util/helper_cuda.h"
+#include "util/timer.h"
 
 #include "files/loadMatpowerFormat.h"
 #include "powersystem/Topology.h"
@@ -119,7 +118,7 @@ void printHelp(){
 			"\n"
 			"\nUsage: MAPoL FILEPATH EXEC-TYPE PART-N ITER-N WMAX WMIN C1 C2"
 			"\n\tFILEPATH\tcasefile for powerflow at MATLAB-Matpower format (default: datasets/case14.m)"
-			"\n\tEXEC-TYPE\tExecution in a sequential (S); parallel (P) or OpenMP (O) manner (defautl: S)"
+			"\n\tEXEC-TYPE\tExecution in a sequential (S); parallel (P) or OpenMP (O) manner (default: S)"
 			"\n\tPART-N\t\t(PSO) Particle number"
 			"\n\tITER-N\t\t(PSO) Number of iterations"
 			"\n\tWMAX\t\t(PSO) Minimum inertia value"
@@ -222,10 +221,12 @@ void readParameters(int argc, char **argv){
 #include <pso/run.h>
 
 int main(int argc, char **argv) {
-	srand(time(0));
+
 	readParameters(argc, argv);
+	srand(time(0));
 
 	Topology t = loadMatpowerFormat(path);
+	printf("DGM:: Finished loading case\n");
 	writeLog(string("Loaded test case: ") + path);
 
 	vector<pso::Particula::Estrutura> estrutura;
@@ -261,6 +262,7 @@ int main(int argc, char **argv) {
 			estrutura.push_back(var);
 		}
 	}
+	printf("DGM:: Finished creating control particles for PSO\n");
 
 	timeTable = (double*) malloc(sizeof(double) * TIME_TABLE_SIZE);
 	for(int i = 0; i < TIME_TABLE_SIZE; i++){
@@ -417,7 +419,7 @@ int main(int argc, char **argv) {
 		}
 		default:
 		{
-			cout << "Unkown EXEC-TYPE. Valid EXEC-TYPEs: S; P" << endl;
+			cout << "Unkown EXEC-TYPE. Valid EXEC-TYPEs: S; P; O" << endl;
 			printHelp();
 		}
 	}

@@ -19,8 +19,7 @@ __host__ __device__ static void __CHECK_ERROR( cudaError_t err,
                          int line ) {
 #ifdef __CUDA_ARCH__
     if (err != cudaSuccess) {
-        printf( "%s in %s at line %d\n", err ,
-                file, line );
+    	printf("%s in %s at line %d\n", err, file, line);
     }
 #else
     if (err != cudaSuccess) {

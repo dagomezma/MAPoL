@@ -1357,6 +1357,7 @@ __host__ void hybrid_newtonpf()
 			start = GetTimer();
 			hybrid_eigen_sparseLU_solver();
 			timeTable[TIME_SOLVER_MKL_DSS] += GetTimer() - start;
+			break;
 		case cuSolver:
 			start = GetTimer();
 			//linearSolverSp(H_NTESTS);

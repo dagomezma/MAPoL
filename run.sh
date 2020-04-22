@@ -1,8 +1,12 @@
 #!/bin/bash
 
+mkdir -p results
+cd results
+
 for ensaio in 1 2 3 4 5
 do
-	for caso in case14.m case30.m case57.m case118.m case300.m case1354pegase.m case2869pegase.m case9241pegase.m;
+#	for caso in case14.m case30.m case57.m case118.m case300.m case1354pegase.m case2869pegase.m case9241pegase.m;
+	for caso in case1354pegase.m
 	do
 		for exe in P O S;
 		do
@@ -17,7 +21,7 @@ do
 				fi
 				echo "	# of Particles: $num"
 				echo "	Execution: $ensaio"
-				./Debug/MAPoL datasets/$caso $exe $num
+				../Debug/MyMAPoL ../datasets/$caso $exe $num
 			done
 		done
 	done

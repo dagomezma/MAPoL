@@ -9,6 +9,7 @@
 #define MAKEYBUS_CUH_
 
 #include <util/complexUtils.h>
+#include <util/helper_cuda.h>
 #include <iostream>
 
 using namespace std;
@@ -109,11 +110,8 @@ __host__ void mkl_computeYfYt(
  * Date : 03/02/2016
  * Description: Compute Admittance Matrix using a hybrid approach CPU and GPU, with cuSparse library.
  * */
-__host__ void mkl_makeYbus(
-		vector<pso::Particula::Estrutura> estrutura,
-		pso::Particula particula,
-		Bus* buses,
-		Branch* branches)
+__host__ void mkl_makeYbus( vector<pso::Particula::Estrutura> estrutura, pso::Particula particula,
+		                    Bus* buses, Branch* branches )
 {
 	// #1 Matrix Cf and Ct is the same to All tests, so compute only once in the first time.
 	// #1.1 Compute Matrix Cf and Ct in Coordinate Format (COO).

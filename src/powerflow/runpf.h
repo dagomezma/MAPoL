@@ -11,6 +11,7 @@
 #include <float.h>
 #include <cuComplex.h>
 #include <util/reduce.h>
+#include "pso/Particula.h"
 
 const int NR = 0;
 const int FDXB = 1;
@@ -24,7 +25,6 @@ const int Eigen_BiCGSTAB = 4;
 const int Eigen_SparseLU = 5;
 const int Eigen_SparseQR = 6;
 const int cuSolver = 6;
-
 
 __constant__ int D_ALG;
 __constant__ int D_NBUS;
@@ -208,20 +208,19 @@ int reduceThreadsBlocks;
 #include <powerflow/newtonpf.h>
 #include <powerflow/fdpf.h>
 
-__host__ void mkl_computeVoltage(
-		Bus *buses,
-		cuDoubleComplex *V,
-		vector<pso::Particula::Estrutura> &estrutura,
-		pso::Particula &particula)
+__host__ void mkl_computeVoltage( Bus *buses, cuDoubleComplex *V,
+		                          vector<pso::Particula::Estrutura> &estrutura,
+		                          pso::Particula &particula )
 {
 	#pragma omp parallel for
 	for (int id = 0; id < H_NBUS; id++) {
 		Bus l_bus = buses[id];
-		double Vbus = (l_bus.indiceEstrutura != -1 && estrutura[l_bus.indiceEstrutura].tipo == pso::Particula::Estrutura::AVR) ? particula[l_bus.indiceEstrutura] :  l_bus.V ;
-		V[id] = cuCmul(make_cuDoubleComplex(Vbus, 0),
-				cuCexp(make_cuDoubleComplex(0, l_bus.O)));
+		double Vbus = ( l_bus.indiceEstrutura != -1 && estrutura[l_bus.indiceEstrutura].tipo == pso::Particula::Estrutura::AVR ) ? particula[l_bus.indiceEstrutura] :  l_bus.V ;
+		V[id] = cuCmul(        make_cuDoubleComplex(Vbus, 0),
+				        cuCexp(make_cuDoubleComplex(0, l_bus.O)) );
 		if (l_bus.type == l_bus.PV || l_bus.type == l_bus.SLACK) {
-			V[id] = cuCmul(make_cuDoubleComplex(Vbus / cuCabs(V[id]), 0.0), V[id]);
+			V[id] = cuCmul( make_cuDoubleComplex(Vbus / cuCabs(V[id]), 0.0),
+					        V[id] );
 		}
 	}
 }
@@ -258,10 +257,11 @@ __host__ double mkl_computeLoss(
 }
 
 __host__ double mkl_runpf(vector<pso::Particula::Estrutura> &estrutura, pso::Particula &particula) {
+	printf("DGM:: Entered mkl_runpf\n");
 
 	double start;
-	start =GetTimer();
-	mkl_computeVoltage( buses, V, estrutura, particula);
+	start = GetTimer();
+	mkl_computeVoltage(buses, V, estrutura, particula);
 	timeTable[TIME_COMPUTEVOLTAGE] += GetTimer() - start;
 
 #ifdef DEBUG
@@ -272,13 +272,13 @@ __host__ double mkl_runpf(vector<pso::Particula::Estrutura> &estrutura, pso::Par
 	}
 #endif
 
-	start =GetTimer();
+	start = GetTimer();
 	mkl_makeYbus(estrutura, particula, buses, branches);
 	timeTable[TIME_MAKEYBUS] += GetTimer() - start;
 
 #ifdef DEBUG
 	printf("Yf = \n");
-	printf("\tCompressed Sparse Column(rows = %d, cols = %d, nnz = %d [%.2lf])\n",H_NBRANCH, H_NBUS,nnzYf, nnzYf * 100.0f / (H_NBRANCH * H_NBUS));
+	printf("\tCompressed Sparse Column(rows = %d, cols = %d, nnz = %d [%.2lf])\n", H_NBRANCH, H_NBUS,nnzYf, nnzYf * 100.0f / (H_NBRANCH * H_NBUS));
 	for(int j = 0; j < H_NBUS; j++){
 		for(int i = 0; i < H_NBRANCH; i++){
 			for(int k = csrRowPtrYf[i] - BASE_INDEX; k < csrRowPtrYf[i + 1] - BASE_INDEX; k++){
@@ -357,6 +357,8 @@ __host__ double mkl_runpf(vector<pso::Particula::Estrutura> &estrutura, pso::Par
 }
 
 __host__ void mkl_init(Topology& topology, int nTest, vector<pso::Particula::Estrutura> estrutura, int algPF) {
+	printf("DGM:: Entered mkl_init\n");
+
 	H_NBUS = topology.buses.size();
 	H_NBRANCH = topology.branches.size();
 	H_NPV = topology.idPVbuses.size();
@@ -602,6 +604,8 @@ __host__ void reduceLoss(double* d_idata, double* d_odata, int threads, int bloc
 }
 
 __host__ void hybrid_runpf(vector<pso::Particula::Estrutura> &estrutura, vector<pso::Particula> &enxame) {
+	printf("DGM:: Entered hybrid_runpf\n");
+
 	double start;
 	start = GetTimer();
 	if(d_enxame == 0){
@@ -788,7 +792,9 @@ __host__ void hybrid_runpf(vector<pso::Particula::Estrutura> &estrutura, vector<
 
 }
 
-__host__ void hybrid_init(Topology& topology, int nTest, int nThreads, vector<pso::Particula::Estrutura> estrutura, int algPF) {
+void hybrid_init(Topology& topology, int nTest, int nThreads, vector<pso::Particula::Estrutura> estrutura, int algPF) {
+	printf("DGM:: Entered hybrid_init\n");
+
 	H_NBUS = topology.buses.size();
 	H_NBRANCH = topology.branches.size();
 	H_NPV = topology.idPVbuses.size();

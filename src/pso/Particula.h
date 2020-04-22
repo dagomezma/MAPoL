@@ -61,8 +61,8 @@ public:
 
 	std::vector<double> X;
 	std::vector<double> V;
-	std::vector<double> M;
-	std::vector<double> *Mg;
+	std::vector<double> bests;
+	std::vector<double> *bests_global;
 	std::vector<Estrutura> *estrutura;
 
 	/* Getters */
@@ -85,46 +85,47 @@ public:
 
 	/* Setters */
 
-	void inicializar(uint tamanho, std::vector<double> *Mg,
+	void inicializar(uint tamParticula, std::vector<double> *bests_global,
 			std::vector<Estrutura> *estrutura, bool defaultValues = false) {
 //		std::default_random_engine gerador(time(0));
 //		std::uniform_real_distribution<double> rand(0, 1);
 
-		X.resize(tamanho);
-		V.resize(tamanho);
-		M.resize(tamanho);
-		this->Mg = Mg;
+		X.resize(tamParticula);
+		V.resize(tamParticula);
+		bests.resize(tamParticula);
+		this->bests_global = bests_global;
 		this->estrutura = estrutura;
 
-		for (uint i = 0; i < tamanho; ++i) {
+		for (uint i = 0; i < tamParticula; ++i) {
 			V[i] = real_rand(); //rand(gerador);
 
 			if (defaultValues) {
-				M[i] = X[i] = estrutura->at(i).defaultValue;
+				bests[i] = X[i] = estrutura->at(i).defaultValue;  // dgm: AVR: Bus.Voltage; ShC: Bus.Bsh
+														     	  //      OLTC: Branch.tap
 			} else {
 				switch (estrutura->at(i).tipo) {
 				case Estrutura::AVR: {
 //				std::uniform_real_distribution<double> rd(estrutura->at(i).min,
 //						estrutura->at(i).max);
-					M[i] = X[i] = real_rand(estrutura->at(i).min,
-							estrutura->at(i).max); //rd(gerador);
+					bests[i] = X[i] = real_rand(estrutura->at(i).min,
+						                    	estrutura->at(i).max); //rd(gerador);
 					break;
 				}
 				case Estrutura::OLTC: {
 //				std::uniform_int_distribution<int> rd(0, estrutura->at(i).qtd);
-					M[i] = X[i] = rand(0, estrutura->at(i).qtd) //rd(gerador)
-					* (estrutura->at(i).max - estrutura->at(i).min)
-							/ estrutura->at(i).qtd + estrutura->at(i).min;
+					bests[i] = X[i] = rand(0, estrutura->at(i).qtd) //rd(gerador)
+					                  * (estrutura->at(i).max - estrutura->at(i).min)
+						           	  /  estrutura->at(i).qtd + estrutura->at(i).min;
 					break;
 				}
 				case Estrutura::SHC: {
 //				std::uniform_int_distribution<int> rd(0, estrutura->at(i).qtd);
-					M[i] = X[i] = rand(0, estrutura->at(i).qtd) //rd(gerador)
-					* estrutura->at(i).max / estrutura->at(i).qtd;
+					bests[i] = X[i] = rand(0, estrutura->at(i).qtd) //rd(gerador)
+					                  * estrutura->at(i).max / estrutura->at(i).qtd;
 					break;
 				}
 				default:
-					M[i] = X[i] = real_rand(); //rand(gerador);
+					bests[i] = X[i] = real_rand(); //rand(gerador);
 				}
 			}
 		}
@@ -134,11 +135,11 @@ public:
 	void mudarFitness(double valor) {
 		_fitness = valor;
 
-		// Atualização do melhor local
+		// Update process for local best
 		if (_fitness < _fitMelhor) {
 			_fitMelhor = _fitness;
 			for (uint i = 0; i < X.size(); ++i) {
-				M[i] = X[i];
+				bests[i] = X[i];
 			}
 		}
 	}
@@ -152,34 +153,32 @@ public:
 			double r2 = real_rand(); //rand(gerador);
 
 			// cálculo da nova velocidade
-			V[i] = w * V[i] + r1 * c * (M[i] - X[i])
-					+ r2 * s * (Mg->at(i) - X[i]);
+			V[i] = w * V[i] + r1 * c * (bests[i] - X[i])
+					+ r2 * s * (bests_global->at(i) - X[i]);
 
 			// atualização da posição
 			X[i] = X[i] + V[i];
 			while (X[i] > estrutura->at(i).max || X[i] < estrutura->at(i).min) {
 				if (X[i] > estrutura->at(i).max) {
 					X[i] = estrutura->at(i).max - real_rand()/*rand(gerador)*/
-					* (X[i] - estrutura->at(i).max);
+					       * (X[i] - estrutura->at(i).max);
 				} else {
 					X[i] = estrutura->at(i).min + real_rand()/*rand(gerador)*/
-					* (estrutura->at(i).min - X[i]);
+					       * (estrutura->at(i).min - X[i]);
 				}
 			}
 			switch (estrutura->at(i).tipo) {
 			case Estrutura::OLTC:
-				X[i] = int(
-						(X[i] - estrutura->at(i).min) * estrutura->at(i).qtd
-								/ (estrutura->at(i).max - estrutura->at(i).min)
-								+ 0.5)
-						* (estrutura->at(i).max - estrutura->at(i).min)
-						/ estrutura->at(i).qtd + estrutura->at(i).min;
+				X[i] = int( (X[i] - estrutura->at(i).min) * estrutura->at(i).qtd
+						   / (estrutura->at(i).max - estrutura->at(i).min)
+						   + 0.5)
+					   * (estrutura->at(i).max - estrutura->at(i).min)
+					   / estrutura->at(i).qtd + estrutura->at(i).min;
 				break;
 			case Estrutura::SHC:
-				X[i] = int(
-						X[i] * estrutura->at(i).qtd / estrutura->at(i).max
-								+ 0.5) * estrutura->at(i).max
-						/ estrutura->at(i).qtd;
+				X[i] = int(X[i] * estrutura->at(i).qtd / estrutura->at(i).max + 0.5)
+				       * estrutura->at(i).max
+					   / estrutura->at(i).qtd;
 				break;
 			default:
 				break;
